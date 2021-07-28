@@ -1,0 +1,7 @@
+.img-list {
+  margin: auto;
+  max-width: 1020px;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 30px 0px;
+}

@@ -1,23 +1,115 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useCallback, useState } from 'react';
 import './App.css';
+import { Input } from './components/input/input';
+import { Button, EButtonType } from './components/button/button';
+import { ImgGroup } from './components/img-list/img-group/img-group';
+import { ImgList } from './components/img-list/img-list';
+
+interface ImgItem {
+  src: string;
+  tag: string;
+}
 
 function App() {
+  const [items, setItems] = useState<ImgItem[]>([]);
+  const [stackTag, setStackTag] = useState<string[]>([]);
+  const [currentTag, setTag] = useState<string[]>([]);
+  const [isGroup, setIsGroup] = useState<boolean>(false);
+  const [isWait, setIsWait] = useState<boolean>(false);
+  const [isClear, setIsClear] = useState<boolean>(false);
+
+  const updateItems = useCallback((url: string, tag: string) => {
+    stackTag.indexOf(tag) === -1 && setStackTag([...stackTag, tag]);
+    setItems([...items, { src: url, tag }]);
+  }, [items, setItems, stackTag, setStackTag]);
+
+  const clearItems = useCallback(() => {
+    setStackTag([]);
+    setItems([]);
+    setIsClear(true);
+  }, []);
+
+  const fetchAPI = useCallback((tag: string) => {
+    // param is a highlighted word from the user before it clicked the button
+    const appKey = 'oj4ilfIlRDtHI5CAtRDP5Bt4L0Vg9Sd9';
+    setIsWait(true);
+    return fetch(`https://api.giphy.com/v1/gifs/random?api_key=${appKey}&tag=${tag}`);
+  }, []);
+
+  const buttonClick = useCallback((urls: { tags: string[], group: boolean, type?: EButtonType }) => (): void => {
+    if (urls.tags.length === 0) {
+      clearItems()
+    } else {
+      if (!(urls.type)) {
+        for (let index = 0; index < urls.tags.length; index++) {
+          fetchAPI(urls.tags[index]).then(async result => {
+            if (result.ok) { // если HTTP-статус в диапазоне 200-299
+              // получаем тело ответа (см. про этот метод ниже)
+              let json = await result.json();
+              setIsWait(false);
+              updateItems(json.data.image_url, urls.tags.join(', '));
+            } else {
+              alert("Ошибка HTTP: " + result.status);
+            }
+          });
+        }
+      }
+    }
+  }, [updateItems, clearItems, fetchAPI])
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+      <header>
+        <div className="App-header-panel">
+          {console.log(isClear)}
+          <Input setTags={setTag} setIsClear={setIsClear} value={!isClear ? currentTag.join(', ') : ''} />
+          <Button
+            type={EButtonType.load}
+            data={{ setterGroup: setIsGroup, value: isGroup }}
+            clickHandle={buttonClick({ tags: currentTag, group: isGroup })}
+          >
+            {isWait ? 'Загрузка...' : 'Загрузить'}
+          </Button>
+          <Button
+            type={EButtonType.clear}
+            data={{ setterGroup: setIsGroup, value: isGroup }}
+            clickHandle={buttonClick({ tags: [], group: isGroup })}
+          >
+            Очистить
+          </Button>
+          <Button
+            type={EButtonType.group}
+            data={{ setterGroup: setIsGroup, value: !isGroup }}
+            clickHandle={buttonClick({ tags: currentTag, group: !isGroup, type: EButtonType.group })}
+          >
+            {!isGroup ? 'Группировать' : 'Разгруппировать'}
+          </Button>
+        </div>
+        {isGroup ?
+          (
+            stackTag
+              .map(
+                item => (
+                  <ImgGroup
+                    items={
+                      items
+                        .filter(({ tag }) => tag === item)
+                        .map(({ src }) => src)
+                    }
+                    tag={item}
+                    key={item}
+                  />
+                )
+              )
+          ) : (
+            <ImgList
+              items={
+                items
+                  .map(({ src }) => src)
+              }
+            />
+          )
+        }
       </header>
     </div>
   );

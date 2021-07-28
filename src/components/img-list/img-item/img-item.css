@@ -1,0 +1,15 @@
+.img-item {
+  -webkit-box-shadow: 0px 0px 2px 0px rgba(34, 60, 80, 0.5);
+  -moz-box-shadow: 0px 0px 2px 0px rgba(34, 60, 80, 0.5);
+  box-shadow: 0px 0px 2px 0px rgba(34, 60, 80, 0.5);
+  border-radius: 5px;
+  width: 30%;
+  height: 400px;
+  margin: 1%;
+}
+
+.img-item img {
+  max-width: 98%;
+  max-height: 98%;
+  padding: 2px;
+}
