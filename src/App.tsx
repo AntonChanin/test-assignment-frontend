@@ -21,6 +21,7 @@ function App() {
   const updateItems = useCallback((url: string, tag: string) => {
     stackTag.indexOf(tag) === -1 && setStackTag([...stackTag, tag]);
     setItems([...items, { src: url, tag }]);
+    console.log(items, stackTag)
   }, [items, setItems, stackTag, setStackTag]);
 
   const clearItems = useCallback(() => {
@@ -38,6 +39,16 @@ function App() {
   let giphs = '';
   const loadItem = useCallback((item: string[]) => {
     let id = 0;
+    const makeid = (length: number) => {
+      let result = '';
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      const charactersLength = characters.length;
+      for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() *
+          charactersLength));
+      }
+      return result;
+    };
     const revers = () => {
       fetchAPI(currentTag[id]).then(async result => {
         if (result.ok) {
@@ -66,23 +77,45 @@ function App() {
           alert("Произошла http ошибка: " + result.status);
         }
       });
+    };
+    const randomTagCall = () => {
+      const randomTag = makeid(Math.round(Math.random() * 10));
+      fetchAPI(randomTag).then(async result => {
+        if (result.ok) {
+          // если HTTP-статус в диапазоне 200-299
+          // получаем тело ответа (см. про этот метод ниже)
+          let json = await result.json();
+          const url: string = json.data.image_url;
+          if (!url) {
+            randomTagCall();
+          } else {
+            updateItems(url, randomTag);
+            setTimeout(() => {
+              randomTagCall();
+            }, 5000);
+          }
+        } else {
+          alert("Произошла http ошибка: " + result.status);
+        }
+      });
+    };
+    if (item.length === 1 && item[0] === 'delay') {
+      setIsWait(true);
+      setTimeout(() => {
+        randomTagCall();
+      }, 5000);
+    } else {
+      revers();
     }
-    revers();
   }, [updateItems, fetchAPI, currentTag, setIsWait, isWait]);
 
   const buttonClick = useCallback((urls: { tags: string[], group: boolean, type?: EButtonType }) => (): void => {
-    if (!isWait) {
-      if (urls.tags.length === 1 && urls.tags[0] === 'delay') {
-
-      } else {
-        if (urls.type === EButtonType.clear) {
-          clearItems();
-        } else {
-          if (urls.type === EButtonType.load) {
-            //past here
-            loadItem(urls.tags);
-          }
-        }
+    if (urls.type === EButtonType.clear) {
+      clearItems();
+    } else {
+      if (!isWait && urls.type === EButtonType.load) {
+        //past here
+        loadItem(urls.tags);
       }
     }
   }, [clearItems, loadItem, isWait]);
