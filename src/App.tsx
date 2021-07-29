@@ -35,7 +35,7 @@ function App() {
     setIsWait(true);
     return fetch(`https://api.giphy.com/v1/gifs/random?api_key=${appKey}&tag=${tag}`);
   }, []);
-  let guphs = '';
+  let giphs = '';
   const loadItem = useCallback((item: string[]) => {
     let id = 0;
     const revers = () => {
@@ -44,13 +44,12 @@ function App() {
           // если HTTP-статус в диапазоне 200-299
           // получаем тело ответа (см. про этот метод ниже)
           let json = await result.json();
-          setIsWait(false);
           const url: string = json.data.image_url;
           if (url) {
-            if (guphs) {
-              guphs = `${guphs} , ${url}`;
+            if (giphs) {
+              giphs = `${giphs} , ${url}`;
             } else {
-              guphs = url;
+              giphs = url;
             };
           } else {
             alert('По тегу ничего не найдено');
@@ -59,7 +58,8 @@ function App() {
           if (currentTag[id]) {
             revers();
           } else {
-            updateItems(guphs, item.join(', '));
+            updateItems(giphs, item.join(', '));
+            setIsWait(false);
             id = 0;
           };
         } else {
@@ -68,19 +68,24 @@ function App() {
       });
     }
     revers();
-  }, [updateItems, fetchAPI, currentTag]);
+  }, [updateItems, fetchAPI, currentTag, setIsWait, isWait]);
 
   const buttonClick = useCallback((urls: { tags: string[], group: boolean, type?: EButtonType }) => (): void => {
-    if (urls.type === EButtonType.clear) {
-      clearItems();
-    } else {
-      if (urls.type === EButtonType.load) {
-        //past here
-        loadItem(urls.tags);
-      }
+    if (!isWait) {
+      if (urls.tags.length === 1 && urls.tags[0] === 'delay') {
 
+      } else {
+        if (urls.type === EButtonType.clear) {
+          clearItems();
+        } else {
+          if (urls.type === EButtonType.load) {
+            //past here
+            loadItem(urls.tags);
+          }
+        }
+      }
     }
-  }, [clearItems, loadItem]);
+  }, [clearItems, loadItem, isWait]);
 
   return (
     <div className="App">
