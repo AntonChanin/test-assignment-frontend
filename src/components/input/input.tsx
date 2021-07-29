@@ -1,4 +1,4 @@
-import { Dispatch, FC, useCallback, useState } from 'react';
+import { Dispatch, FC, useCallback } from 'react';
 import './input.css';
 
 interface InputProps {
@@ -8,7 +8,6 @@ interface InputProps {
 }
 
 export const Input: FC<InputProps> = ({ setTags, setIsClear, value }) => {
-  console.log('value ', value, setIsClear)
   const changeHandle = useCallback((event: { target: { value: string; }; }) => {
     setIsClear(false);
     setTags(event.target.value.replace(/\s/g, '').split(','));

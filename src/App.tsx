@@ -35,45 +35,69 @@ function App() {
     setIsWait(true);
     return fetch(`https://api.giphy.com/v1/gifs/random?api_key=${appKey}&tag=${tag}`);
   }, []);
+  let guphs = '';
+  const loadItem = useCallback((item: string[]) => {
+    let id = 0;
+    const revers = () => {
+      fetchAPI(currentTag[id]).then(async result => {
+        if (result.ok) {
+          // если HTTP-статус в диапазоне 200-299
+          // получаем тело ответа (см. про этот метод ниже)
+          let json = await result.json();
+          setIsWait(false);
+          const url: string = json.data.image_url;
+          if (url) {
+            if (guphs) {
+              guphs = `${guphs} , ${url}`;
+            } else {
+              guphs = url;
+            };
+          } else {
+            alert('По тегу ничего не найдено');
+          }
+          id += 1;
+          if (currentTag[id]) {
+            revers();
+          } else {
+            updateItems(guphs, item.join(', '));
+            id = 0;
+          };
+        } else {
+          alert("Произошла http ошибка: " + result.status);
+        }
+      });
+    }
+    revers();
+  }, [updateItems, fetchAPI, currentTag]);
 
   const buttonClick = useCallback((urls: { tags: string[], group: boolean, type?: EButtonType }) => (): void => {
-    if (urls.tags.length === 0) {
-      clearItems()
+    if (urls.type === EButtonType.clear) {
+      clearItems();
     } else {
-      if (!(urls.type)) {
-        for (let index = 0; index < urls.tags.length; index++) {
-          fetchAPI(urls.tags[index]).then(async result => {
-            if (result.ok) { // если HTTP-статус в диапазоне 200-299
-              // получаем тело ответа (см. про этот метод ниже)
-              let json = await result.json();
-              setIsWait(false);
-              updateItems(json.data.image_url, urls.tags.join(', '));
-            } else {
-              alert("Ошибка HTTP: " + result.status);
-            }
-          });
-        }
+      if (urls.type === EButtonType.load) {
+        //past here
+        loadItem(urls.tags);
       }
+
     }
-  }, [updateItems, clearItems, fetchAPI])
+  }, [clearItems, loadItem]);
 
   return (
     <div className="App">
       <header>
         <div className="App-header-panel">
-          {console.log(isClear)}
           <Input setTags={setTag} setIsClear={setIsClear} value={!isClear ? currentTag.join(', ') : ''} />
           <Button
             type={EButtonType.load}
             data={{ setterGroup: setIsGroup, value: isGroup }}
-            clickHandle={buttonClick({ tags: currentTag, group: isGroup })}
+            clickHandle={buttonClick({ tags: currentTag, group: isGroup, type: EButtonType.load })}
           >
             {isWait ? 'Загрузка...' : 'Загрузить'}
           </Button>
           <Button
             type={EButtonType.clear}
             data={{ setterGroup: setIsGroup, value: isGroup }}
-            clickHandle={buttonClick({ tags: [], group: isGroup })}
+            clickHandle={buttonClick({ tags: [], group: isGroup, type: EButtonType.clear })}
           >
             Очистить
           </Button>
