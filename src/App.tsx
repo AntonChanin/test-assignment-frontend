@@ -21,7 +21,6 @@ function App() {
   const updateItems = useCallback((url: string, tag: string) => {
     stackTag.indexOf(tag) === -1 && setStackTag([...stackTag, tag]);
     setItems([...items, { src: url, tag }]);
-    console.log(items, stackTag)
   }, [items, setItems, stackTag, setStackTag]);
 
   const clearItems = useCallback(() => {
@@ -101,9 +100,7 @@ function App() {
     };
     if (item.length === 1 && item[0] === 'delay') {
       setIsWait(true);
-      setTimeout(() => {
-        randomTagCall();
-      }, 5000);
+      randomTagCall();
     } else {
       revers();
     }
@@ -115,6 +112,7 @@ function App() {
     } else {
       if (!isWait && urls.type === EButtonType.load) {
         //past here
+        setIsClear(false);
         loadItem(urls.tags);
       }
     }
@@ -132,13 +130,15 @@ function App() {
           >
             {isWait ? 'Загрузка...' : 'Загрузить'}
           </Button>
-          <Button
-            type={EButtonType.clear}
-            data={{ setterGroup: setIsGroup, value: isGroup }}
-            clickHandle={buttonClick({ tags: [], group: isGroup, type: EButtonType.clear })}
-          >
-            Очистить
-          </Button>
+          <a href="/">
+            <Button
+              type={EButtonType.clear}
+              data={{ setterGroup: setIsGroup, value: isGroup }}
+              clickHandle={buttonClick({ tags: [], group: isGroup, type: EButtonType.clear })}
+            >
+              Очистить
+            </Button>
+          </a>
           <Button
             type={EButtonType.group}
             data={{ setterGroup: setIsGroup, value: !isGroup }}
